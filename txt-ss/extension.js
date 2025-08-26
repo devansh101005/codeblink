@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
+const Tesseract = require("tesseract.js");
 
 /** 
 * @param {vscode.ExtensionContext} context
@@ -35,14 +36,33 @@ const vscode = require('vscode');
 
 //Writing that same function with some changes
 function activate(context) {
-    let disposable = vscode.commands.registerCommand('txt-ss.searchss', function () {
+    let disposable = vscode.commands.registerCommand('extension.pasteScreenshotText',
+		async function () {
         const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            editor.edit(editBuilder => {
-                editBuilder.insert(editor.selection.active, "Hello from my first extension!");
-            });
-        }
+         if (!editor) return;
+
+    // Select an image file
+    const uri = await vscode.window.showOpenDialog({
+      canSelectMany: false,
+      filters: { Images: ["png", "jpg", "jpeg"] }
     });
+
+    if (!uri) return;
+
+    vscode.window.showInformationMessage("Running OCR...");
+
+    // Run Tesseract OCR
+    Tesseract.recognize(uri[0].fsPath, "eng")
+      .then(({ data: { text } }) => {
+        editor.edit(editBuilder => {
+          editBuilder.insert(editor.selection.active, text);
+        });
+        vscode.window.showInformationMessage("OCR complete!");
+      })
+      .catch(err => {
+        vscode.window.showErrorMessage("OCR failed: " + err.message);
+      });
+  });
 
     context.subscriptions.push(disposable);
 }
