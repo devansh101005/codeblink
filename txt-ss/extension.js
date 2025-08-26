@@ -2,6 +2,10 @@
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const Tesseract = require("tesseract.js");
+const { exec } = require("child_process");
+const os = require("os");
+const path = require("path");
+const fs=require("fs");
 
 /** 
 * @param {vscode.ExtensionContext} context
@@ -35,43 +39,62 @@ const Tesseract = require("tesseract.js");
 // }
 
 //Writing that same function with some changes
+
+
+
+
+
 function activate(context) {
     let disposable = vscode.commands.registerCommand('extension.pasteScreenshotText',
 		async function () {
         const editor = vscode.window.activeTextEditor;
          if (!editor) return;
 
-    // Select an image file
-    const uri = await vscode.window.showOpenDialog({
-      canSelectMany: false,
-      filters: { Images: ["png", "jpg", "jpeg"] }
-    });
+      const tmpFile = path.join(os.tmpdir(), "vscode_clip.png");
+      exec(
+        `powershell -command "Add-Type -AssemblyName System.Windows.Forms; if ([Windows.Forms.Clipboard]::ContainsImage()) { [Windows.Forms.Clipboard]::GetImage().Save('${tmpFile}'); }"`,
+        (err) => {
+          if (err) {
+            vscode.window.showErrorMessage("No image in clipboard!");
+            return;
+          }
 
-    if (!uri) return;
+          vscode.window.showInformationMessage("Running OCR...");
 
-    vscode.window.showInformationMessage("Running OCR...");
 
-    // Run Tesseract OCR
-    Tesseract.recognize(uri[0].fsPath, "eng")
-      .then(({ data: { text } }) => {
-        editor.edit(editBuilder => {
-          editBuilder.insert(editor.selection.active, text);
-        });
-        vscode.window.showInformationMessage("OCR complete!");
-      })
-      .catch(err => {
-        vscode.window.showErrorMessage("OCR failed: " + err.message);
-      });
-  });
+          Tesseract.recognize(tmpFile, "eng")
+            .then(({ data: { text } }) => {
+              editor.edit((editBuilder) => {
+                editBuilder.insert(editor.selection.active, text);
+              });
+			   vscode.window.showInformationMessage("OCR complete!");
+            })
+            .catch((err) => {
+              vscode.window.showErrorMessage("OCR failed: " + err.message);
+            });
+        }
+      );
+    }
+  );
+
+
+
+    
 
     context.subscriptions.push(disposable);
 }
 
 
-// // This method is called when your extension is deactivated
+
  function deactivate() {}
 
  module.exports = {
  	activate,
  	deactivate
  }
+
+
+
+
+
+
