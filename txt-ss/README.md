@@ -1,65 +1,33 @@
-# txt-ss README
+# txt-ss
 
-This is the README for your extension "txt-ss". After writing up a brief description, we recommend including the following sections.
+A VS Code extension that lets you **paste text directly from screenshots** using OCR (powered by `tesseract.js`).
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Take a screenshot, paste it into VS Code, and the text will be extracted automatically.
+- Supports multiple OCR languages (default: English).
+- Configurable OCR language via `ocr.language` in VS Code settings.
+- Debug logs in the Output channel.
 
-For example if there is an image subfolder under your extension project workspace:
+## Commands
 
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- **Paste Screenshot as Text** (`txt-ss.pasteScreenshotText`)  
+  Extracts text from a screenshot and pastes it into the active editor.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+This extension contributes the following setting:
 
-For example:
+* `ocr.language`: OCR language code (`eng`, `deu`, `fra`, etc.).
 
-This extension contributes the following settings:
+## Requirements
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Windows (Linux/Mac support coming soon).
+- Node.js 16+.
+- [Tesseract.js](https://github.com/naptha/tesseract.js) (already bundled).
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
+- Initial release of txt-ss
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**

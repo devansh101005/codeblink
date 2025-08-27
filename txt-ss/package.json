@@ -1,8 +1,13 @@
 {
   "name": "txt-ss",
   "displayName": "txt-ss",
-  "description": "An extension",
+  "description": "An extension that pastes text from a screenshot using OCR",
   "version": "0.0.1",
+  "publisher": "devansh",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/txt-ss.git"
+  },
   "engines": {
     "vscode": "^1.103.0"
   },
@@ -14,6 +19,15 @@
   ],
   "main": "./extension.js",
   "contributes": {
+    "configuration": {
+      "properties": {
+        "ocr.language": {
+          "type": "string",
+          "default": "eng",
+          "description": "OCR language code (eng, deu, etc.)"
+        }
+      }
+    },
     "commands": [
       {
         "command": "extension.pasteScreenshotText",
@@ -29,7 +43,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/vscode": "^1.103.0",
+    "@types/vscode": "^1.99.0",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.32.0"

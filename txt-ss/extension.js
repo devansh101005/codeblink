@@ -44,55 +44,136 @@ const fs=require("fs");
 
 
 
-function activate(context) {
-    let disposable = vscode.commands.registerCommand('extension.pasteScreenshotText',
-		async function () {
-        const editor = vscode.window.activeTextEditor;
-         if (!editor) return;
+// function activate(context) {
+//     let disposable = vscode.commands.registerCommand('extension.pasteScreenshotText',
+// 		async function () {
+//         const editor = vscode.window.activeTextEditor;
+//          if (!editor) return;
 
-      const tmpFile = path.join(os.tmpdir(), "vscode_clip.png");
-      exec(
-        `powershell -command "Add-Type -AssemblyName System.Windows.Forms; if ([Windows.Forms.Clipboard]::ContainsImage()) { [Windows.Forms.Clipboard]::GetImage().Save('${tmpFile}'); }"`,
-        (err) => {
-          if (err) {
-            vscode.window.showErrorMessage("No image in clipboard!");
-            return;
-          }
+//       const tmpFile = path.join(os.tmpdir(), "vscode_clip.png");
+//       exec(
+//         `powershell -command "Add-Type -AssemblyName System.Windows.Forms; if ([Windows.Forms.Clipboard]::ContainsImage()) { [Windows.Forms.Clipboard]::GetImage().Save('${tmpFile}'); }"`,
+//         (err) => {
+//           if (err) {
+//             vscode.window.showErrorMessage("No image in clipboard!");
+//             return;
+//           }
 
-          vscode.window.showInformationMessage("Running OCR...");
+//           vscode.window.showInformationMessage("Running OCR...");
 
 
-          Tesseract.recognize(tmpFile, "eng")
-            .then(({ data: { text } }) => {
-              editor.edit((editBuilder) => {
-                editBuilder.insert(editor.selection.active, text);
-              });
-			   vscode.window.showInformationMessage("OCR complete!");
-            })
-            .catch((err) => {
-              vscode.window.showErrorMessage("OCR failed: " + err.message);
-            });
-        }
-      );
-    }
-  );
+//           Tesseract.recognize(tmpFile, "eng")
+//             .then(({ data: { text } }) => {
+				
+//               editor.edit((editBuilder) => {
+//                 editBuilder.insert(editor.selection.active, text);
+//               });
+// 			   vscode.window.showInformationMessage("OCR complete!");
+//             })
+//             .catch((err) => {
+//               vscode.window.showErrorMessage("OCR failed: " + err.message);
+//             });
+//         }
+//       );
+//     }
+//   );
 
 
 
     
 
-    context.subscriptions.push(disposable);
+//     context.subscriptions.push(disposable);
+// }
+
+
+
+//  function deactivate() {}
+
+//  module.exports = {
+//  	activate,
+//  	deactivate
+//  }
+
+
+
+
+
+function activate(context) {
+  // 1. Create a dedicated Output Channel
+  const outputChannel = vscode.window.createOutputChannel("OCR Logs");
+
+  let disposable = vscode.commands.registerCommand(
+    "extension.pasteScreenshotText",
+    async function () {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) return;
+
+      const tmpFile = path.join(os.tmpdir(), "vscode_clip.png");
+
+      exec(
+        `powershell -command "Add-Type -AssemblyName System.Windows.Forms; if ([Windows.Forms.Clipboard]::ContainsImage()) { [Windows.Forms.Clipboard]::GetImage().Save('${tmpFile}'); }"`,
+        (err) => {
+          if (err) {
+            vscode.window.showErrorMessage("No image in clipboard!");
+            outputChannel.appendLine("[ERROR] No image found in clipboard.");
+            return;
+          }
+
+          vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: "Running OCR on screenshot...",
+              cancellable: false,
+            },
+            async (progress) => {
+              progress.report({ increment: 0, message: "Starting OCR..." });
+              outputChannel.show(true); // Auto-show logs
+              outputChannel.appendLine("=== OCR Process Started ===");
+              outputChannel.appendLine("Image file: " + tmpFile);
+
+              try {
+                const result = await Tesseract.recognize(tmpFile, "eng", {
+                  logger: (m) => {
+                    outputChannel.appendLine(`[OCR] ${m.status} (${Math.round(m.progress * 100)}%)`);
+                    if (m.status === "recognizing text") {
+                      progress.report({
+                        increment: m.progress * 100,
+                        message: "Recognizing text...",
+                      });
+                    }
+                  },
+                });
+
+                const text = result.data.text;
+                outputChannel.appendLine("--- Recognized Text ---");
+                outputChannel.appendLine(text);
+                outputChannel.appendLine("=======================");
+
+                editor.edit((editBuilder) => {
+                  editBuilder.insert(editor.selection.active, text);
+                });
+
+                vscode.window.showInformationMessage("✅ OCR complete!");
+              } catch (err) {
+                vscode.window.showErrorMessage("OCR failed: " + err.message);
+                outputChannel.appendLine("[ERROR] OCR failed: " + err.message);
+              }
+            }
+          );
+        }
+      );
+    }
+  );
+
+  context.subscriptions.push(disposable);
 }
 
+function deactivate() {}
 
-
- function deactivate() {}
-
- module.exports = {
- 	activate,
- 	deactivate
- }
-
+module.exports = {
+  activate,
+  deactivate,
+};
 
 
 
